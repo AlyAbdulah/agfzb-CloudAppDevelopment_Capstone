@@ -74,7 +74,7 @@ def registration_request(request):
 def get_dealerships(request):
     context = {}
     if request.method == "GET":
-        url = "https://aliabdullahh-3000.theiadocker-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+        url = "https://us-south.functions.appdomain.cloud/api/v1/web/893ca31b-6718-4e73-b38f-e6f8d82a23f7/default/get-dealership"
         # Get dealers from the URL
         dealerships = get_dealers_from_cf(url)
         # Concat all dealer's short name
@@ -91,15 +91,13 @@ def get_dealerships(request):
 def get_dealer_details(request, dealer_id):
     context = {}
     if request.method == "GET":
-        url = "https://5bde1960.us-south.apigw.appdomain.cloud/api/review"
+        url = f'https://us-south.functions.appdomain.cloud/api/v1/web/893ca31b-6718-4e73-b38f-e6f8d82a23f7/default/get-reviews?id={dealer_id}'
         reviews = get_dealer_reviews_from_cf(url)
-        # Concat all dealer's short name
-        # dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
-        # Return a list of dealer short name
-        # return HttpResponse(dealer_names)
-        context['reviews'] = filter(lambda x: x.dealership == dealer_id, reviews)
-        context['dealer_id'] = dealer_id
-        context['dealer'] = get_dealer_detail_infos(dealer_id)
+        context = {
+            "reviews":  reviews, 
+            "dealer_id": dealer_id
+        }
+
     return render(request, 'djangoapp/dealer_details.html', context)
 
 
@@ -114,7 +112,7 @@ def add_review(request, dealer_id):
         context['cars'] = CarModel.objects.all()
         return render(request, 'djangoapp/add_review.html', context)
     if request.method == "POST":
-        url = "https://5bde1960.us-south.apigw.appdomain.cloud/api/review-post"
+        url = "https://us-south.functions.appdomain.cloud/api/v1/web/893ca31b-6718-4e73-b38f-e6f8d82a23f7/default/post-review"
         payload = {}
         payload['name'] = request.POST['username']
         payload['dealership'] = dealer_id
@@ -126,12 +124,14 @@ def add_review(request, dealer_id):
             payload['car_make'] = car.make.name
             payload['car_model'] = car.name
             payload['car_year'] = car.year.strftime("%Y")
-        store_review(url, payload)
+        finalPayLoad = {
+            'review' : payload
+        }
+        store_review(url, finalPayLoad)
     return redirect('djangoapp:dealer_details', dealer_id = dealer_id)
-
-
+    
 def get_dealer_detail_infos(dealer_id):
-    url = "https://5bde1960.us-south.apigw.appdomain.cloud/api/dealership"
-    #https://b29a033a-5254-41f1-b087-149a9e481f68-bluemix.cloudant.com/dealerships
-    dealerships = get_dealers_from_cf(url)
-    return next(filter(lambda x: x.id == dealer_id, dealerships))
+    url = f"https://us-south.functions.appdomain.cloud/api/v1/web/893ca31b-6718-4e73-b38f-e6f8d82a23f7/default/get-dealership?id={dealer_id}"
+    dealership = get_dealers_from_cf(url)
+    #return next(filter(lambda x: x.id == dealer_id, dealerships))
+    return dealership
